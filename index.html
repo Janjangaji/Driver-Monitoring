@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Driver Monitoring </title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #020617, #0f172a);
+  color: white;
+  max-width: 520px;
+  margin: auto;
+}
+
+/* TITLE */
+h1 {
+  text-align: center;
+  font-size: 24px;
+  margin-top: 15px;
+}
+
+#clock {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* DASHBOARD */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 10px;
+}
+
+.card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(18px);
+  padding: 15px;
+  border-radius: 16px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.status-full {
+  grid-column: span 3;
+}
+
+.value {
+  font-size: 24px;
+  margin-top: 6px;
+  font-weight: bold;
+}
+
+.normal { color: #22c55e; }
+.danger { color: #fff; }
+
+#status {
+  font-size: 28px;
+}
+
+/* BUTTON */
+button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg,#3b82f6,#06b6d4);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.delete {
+  background: linear-gradient(135deg,#ef4444,#dc2626);
+}
+
+/* TEST MODE */
+#testMode {
+  display:none;
+  text-align:center;
+  padding: 10px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  margin: 10px;
+}
+
+.timer {
+  font-size: 32px;
+  font-weight: bold;
+  margin-top: 10px;
+  color: #38bdf8;
+}
+
+/* INPUT */
+input {
+  border-radius: 8px;
+  border: none;
+  padding: 8px;
+  margin-top: 5px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  text-align: center;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  font-size: 11px;
+  border-collapse: collapse;
+}
+
+th {
+  background: rgba(255,255,255,0.08);
+  padding: 6px;
+}
+
+td {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 6px;
+  text-align: center;
+}
+
+/* SECTION TITLE */
+h3 {
+  margin: 15px 10px 5px;
+}
+
+/* POPUP */
+#popup {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: red;
+  padding: 12px;
+  border-radius: 10px;
+  display: none;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>DRIVER MONITORING EYEWAKE</h1>
+<div id="clock">--</div>
+
+<div class="dashboard">
+  <div class="card">💓 BPM<div id="bpm" class="value">-</div></div>
+  <div class="card">🧠 Kemiringan<div id="tilt" class="value">-</div></div>
+  <div class="card">👁️ Mata<div id="eye" class="value">-</div></div>
+
+  <!-- STATUS CENTER -->
+  <div class="card status-full" id="statusCard">
+    🚨 Status
+    <div id="status" class="value">Loading...</div>
+  </div>
+</div>
+
+<!-- TOGGLE BUTTON -->
+<button onclick="toggleTest()" id="btnTest">🧪 Mode Pengujian</button>
+
+<div id="testMode">
+<h2>Mode Pengujian</h2>
+
+<input id="nama" placeholder="Nama Penguji">
+<button onclick="startTest()">Start</button>
+<button onclick="stopTest()">Stop</button>
+
+<div class="timer" id="timer">00:00</div>
+</div>
+
+<h3>Microsleep</h3>
+<button onclick="downloadExcel(microData)">Download</button>
+<button class="delete" onclick="clearHistory('history_microsleep')">Hapus Semua</button>
+<table id="microTable"></table>
+
+<h3>Semua</h3>
+<button onclick="downloadExcel(allData)">Download</button>
+<button class="delete" onclick="clearHistory('history_semua')">Hapus Semua</button>
+<table id="allTable"></table>
+
+<div id="popup"></div>
+
+<audio id="alarm">
+<source src="https://www.soundjay.com/button/beep-07.wav">
+</audio>
+
+<script>
+// FIREBASE
+var firebaseConfig = {
+  apiKey: "AIzaSyCxGUL6WfZzzn3W_phwlMn6kNChyo7lmDA",
+  databaseURL: "https://driver-monitoring-6e4df-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
+
+// CLOCK
+setInterval(()=>{
+  document.getElementById("clock").innerText =
+    new Date().toLocaleString();
+},1000);
+
+// REALTIME
+let lastStatus="Normal";
+let currentData={};
+
+db.ref("monitoring").on("value", snap=>{
+  let d=snap.val();
+
+  if(!d){
+    document.getElementById("status").innerText="No Data";
+    return;
+  }
+
+  currentData=d;
+
+  document.getElementById("bpm").innerText=d.bpm || "-";
+  document.getElementById("tilt").innerText=d.kemiringan || "-";
+  document.getElementById("eye").innerText=d.mata || "-";
+
+  let statusEl=document.getElementById("status");
+  let card=document.getElementById("statusCard");
+
+  statusEl.innerText=d.status || "-";
+
+  if(d.status=="Microsleep"){
+    statusEl.className="value danger";
+    card.style.background="linear-gradient(135deg,#7f1d1d,#ef4444)";
+    document.body.style.background="linear-gradient(135deg,#1f0000,#7f1d1d)";
+  } else {
+    statusEl.className="value normal";
+    card.style.background="rgba(255,255,255,0.05)";
+    document.body.style.background="linear-gradient(135deg,#020617,#0f172a)";
+  }
+
+  if(d.status=="Microsleep" && lastStatus!="Microsleep"){
+    showPopup("🚨 MICROSLEEP!");
+    document.getElementById("alarm").play();
+  }
+
+  lastStatus=d.status;
+});
+
+// POPUP
+function showPopup(msg){
+  let p=document.getElementById("popup");
+  p.innerText=msg;
+  p.style.display="block";
+  setTimeout(()=>p.style.display="none",3000);
+}
+
+// HISTORY
+let microData=[],allData=[];
+
+function render(data,id,path){
+  let html=`
+    <tr>
+      <th>Waktu</th>
+      <th>BPM</th>
+      <th>Kemiringan</th>
+      <th>Mata</th>
+      <th>Status</th>
+      <th></th>
+    </tr>
+  `;
+
+  data.reverse().forEach(d=>{
+    html+=`<tr>
+      <td>${d.datetime || '-'}</td>
+      <td>${d.bpm || '-'}</td>
+      <td>${d.kemiringan || '-'}</td>
+      <td>${d.mata || '-'}</td>
+      <td>${d.status || '-'}</td>
+      <td><button class="delete" onclick="deleteItem('${path}','${d.key}')">X</button></td>
+    </tr>`;
+  });
+
+  document.getElementById(id).innerHTML=html;
+}
+
+db.ref("history_microsleep").limitToLast(10).on("value", snap=>{
+  microData=[];
+  snap.forEach(c=>{
+    let d=c.val(); d.key=c.key;
+    microData.push(d);
+  });
+  render(microData,"microTable","history_microsleep");
+});
+
+db.ref("history_semua").limitToLast(10).on("value", snap=>{
+  allData=[];
+  snap.forEach(c=>{
+    let d=c.val(); d.key=c.key;
+    allData.push(d);
+  });
+  render(allData,"allTable","history_semua");
+});
+
+function deleteItem(path,key){
+  db.ref(path+"/"+key).remove();
+}
+
+function clearHistory(path){
+  if(confirm("Hapus semua?")){
+    db.ref(path).remove();
+  }
+}
+
+// EXCEL
+function downloadExcel(data){
+  let ws=XLSX.utils.json_to_sheet(data);
+  let wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Data");
+  XLSX.writeFile(wb,"history.xlsx");
+}
+
+// TEST
+let testData=[],timer,sec=0;
+let isTestOpen=false;
+
+function toggleTest(){
+  let test=document.getElementById("testMode");
+  let btn=document.getElementById("btnTest");
+
+  isTestOpen=!isTestOpen;
+
+  if(isTestOpen){
+    test.style.display="block";
+    btn.innerText="⬅️ Kembali";
+  } else {
+    test.style.display="none";
+    btn.innerText="🧪 Mode Pengujian";
+  }
+}
+
+function startTest(){
+  let nama=document.getElementById("nama").value;
+  if(!nama) return showPopup("Isi nama!");
+
+  testData=[]; sec=0;
+  showPopup("Start!");
+
+  timer=setInterval(()=>{
+    sec++;
+    timerDisplay();
+
+    testData.push({
+      nama:nama,
+      waktu:new Date().toLocaleString(),
+      bpm:currentData.bpm,
+      kemiringan:currentData.kemiringan,
+      mata:currentData.mata,
+      status:currentData.status
+    });
+
+  },1000);
+}
+
+function stopTest(){
+  clearInterval(timer);
+
+  let nama=document.getElementById("nama").value;
+  let tgl=new Date().toISOString().slice(0,10);
+
+  let ws=XLSX.utils.json_to_sheet(testData);
+  let wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Pengujian");
+
+  XLSX.writeFile(wb,`Pengujian_${nama}_${tgl}.xlsx`);
+
+  showPopup("Download berhasil!");
+}
+
+// TIMER
+function timerDisplay(){
+  let m=Math.floor(sec/60);
+  let s=sec%60;
+  document.getElementById("timer").innerText =
+    `${m}:${s<10?"0":""}${s}`;
+}
+</script>
+
+</body>
+</html>
