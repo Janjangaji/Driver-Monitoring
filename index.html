@@ -1,394 +1,282 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Driver Monitoring </title>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-<style>
-body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #020617, #0f172a);
-  color: white;
-  max-width: 520px;
-  margin: auto;
-}
-
-/* TITLE */
-h1 {
-  text-align: center;
-  font-size: 24px;
-  margin-top: 15px;
-}
-
-#clock {
-  text-align: center;
-  color: #94a3b8;
-  font-size: 13px;
-}
-
-/* DASHBOARD */
-.dashboard {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  padding: 10px;
-}
-
-.card {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(18px);
-  padding: 15px;
-  border-radius: 16px;
-  text-align: center;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-.status-full {
-  grid-column: span 3;
-}
-
-.value {
-  font-size: 24px;
-  margin-top: 6px;
-  font-weight: bold;
-}
-
-.normal { color: #22c55e; }
-.danger { color: #fff; }
-
-#status {
-  font-size: 28px;
-}
-
-/* BUTTON */
-button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 8px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg,#3b82f6,#06b6d4);
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.delete {
-  background: linear-gradient(135deg,#ef4444,#dc2626);
-}
-
-/* TEST MODE */
-#testMode {
-  display:none;
-  text-align:center;
-  padding: 10px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 12px;
-  margin: 10px;
-}
-
-.timer {
-  font-size: 32px;
-  font-weight: bold;
-  margin-top: 10px;
-  color: #38bdf8;
-}
-
-/* INPUT */
-input {
-  border-radius: 8px;
-  border: none;
-  padding: 8px;
-  margin-top: 5px;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  text-align: center;
-}
-
-/* TABLE */
-table {
-  width: 100%;
-  font-size: 11px;
-  border-collapse: collapse;
-}
-
-th {
-  background: rgba(255,255,255,0.08);
-  padding: 6px;
-}
-
-td {
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 6px;
-  text-align: center;
-}
-
-/* SECTION TITLE */
-h3 {
-  margin: 15px 10px 5px;
-}
-
-/* POPUP */
-#popup {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: red;
-  padding: 12px;
-  border-radius: 10px;
-  display: none;
-  font-weight: bold;
-}
-</style>
+  <!-- Mengatur karakter agar teks Indonesia tampil normal. -->
+  <meta charset="UTF-8" />
+  <!-- Mengatur tampilan agar responsif di HP dan laptop. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Judul tab browser. -->
+  <title>Driver Monitoring EYEWAKE</title>
+  <!-- Memanggil CSS eksternal agar tampilan terpisah dari HTML. -->
+  <link rel="stylesheet" href="style.css" />
+  <!-- Memanggil Firebase App versi compat karena kode memakai firebase.database(). -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <!-- Memanggil Firebase Realtime Database versi compat. -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Memanggil library XLSX untuk export histori microsleep ke Excel. -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- Memanggil JavaScript utama setelah HTML selesai dibaca browser. -->
+  <script src="script.js" defer></script>
 </head>
-
 <body>
+  <!-- Pembungkus utama seluruh website. -->
+  <main class="app-shell">
+    <!-- Header aplikasi. -->
+    <header class="app-header">
+      <!-- Judul utama website. -->
+      <div>
+        <!-- Label kecil aplikasi. -->
+        <p class="eyebrow">Realtime Dashboard</p>
+        <!-- Nama aplikasi. -->
+        <h1>Driver Monitoring EYEWAKE</h1>
+      </div>
+      <!-- Jam realtime dari browser. -->
+      <div class="clock-card" id="clock">--</div>
+    </header>
 
-<h1>DRIVER MONITORING EYEWAKE</h1>
-<div id="clock">--</div>
+    <!-- Status kecil koneksi alat di bagian atas halaman. -->
+    <section class="device-status disconnected" id="deviceStatus" aria-live="polite">
+      <!-- Titik indikator: hijau saat data alat masuk, merah saat tidak ada data. -->
+      <span class="device-dot" id="deviceStatusDot"></span>
+      <!-- Teks status koneksi alat. -->
+      <div class="device-status-text">
+        <!-- Status utama koneksi alat. -->
+        <strong id="deviceStatusText">Alat Tidak Terhubung</strong>
+        <!-- Detail kecil waktu update terakhir. -->
+        <small id="deviceStatusDetail">Menunggu data dari ESP32.</small>
+      </div>
+    </section>
 
-<div class="dashboard">
-  <div class="card">💓 BPM<div id="bpm" class="value">-</div></div>
-  <div class="card">🧠 Kemiringan<div id="tilt" class="value">-</div></div>
-  <div class="card">👁️ Mata<div id="eye" class="value">-</div></div>
+    <!-- Kartu awal untuk mengisi identitas sebelum monitoring dimulai. -->
+    <section class="setup-card" id="setupCard">
+      <!-- Judul form identitas. -->
+      <div class="section-heading">
+        <!-- Teks utama form. -->
+        <h2>Data Driver</h2>
+        <!-- Keterangan rule BPM sesuai jenis kelamin. -->
+        <p>Isi nama dan jenis kelamin sebelum memulai monitoring.</p>
+      </div>
 
-  <!-- STATUS CENTER -->
-  <div class="card status-full" id="statusCard">
-    🚨 Status
-    <div id="status" class="value">Loading...</div>
-  </div>
-</div>
+      <!-- Form identitas driver. -->
+      <form class="setup-form" id="driverForm">
+        <!-- Grup input nama. -->
+        <label class="field">
+          <!-- Label nama. -->
+          <span>Nama Driver</span>
+          <!-- Input nama driver. -->
+          <input type="text" id="driverName" placeholder="Masukkan nama" autocomplete="name" required />
+        </label>
 
-<!-- TOGGLE BUTTON -->
-<button onclick="toggleTest()" id="btnTest">🧪 Mode Pengujian</button>
+        <!-- Grup pilihan jenis kelamin. -->
+        <label class="field">
+          <!-- Label jenis kelamin. -->
+          <span>Jenis Kelamin</span>
+          <!-- Select jenis kelamin; value disamakan dengan yang dibaca ESP32. -->
+          <select id="driverGender" required>
+            <!-- Rule pria/laki-laki memakai threshold BPM < 65. -->
+            <option value="pria">Laki-laki — Microsleep jika BPM &lt; 65</option>
+            <!-- Rule perempuan memakai threshold BPM < 63. -->
+            <option value="perempuan">Perempuan — Microsleep jika BPM &lt; 63</option>
+          </select>
+        </label>
 
-<div id="testMode">
-<h2>Mode Pengujian</h2>
+        <!-- Informasi rule aktif. -->
+        <div class="rule-note" id="ruleNote">Rule aktif akan muncul setelah jenis kelamin dipilih.</div>
 
-<input id="nama" placeholder="Nama">
-<button onclick="startTest()">Start</button>
-<button onclick="stopTest()">Stop</button>
+        <!-- Tombol untuk menyimpan data driver ke Firebase dan mulai monitoring. -->
+        <button type="submit" class="primary-button">Mulai Monitoring</button>
+      </form>
+    </section>
 
-<div class="timer" id="timer">00:00</div>
-</div>
+    <!-- Dashboard disembunyikan sampai data driver disimpan. -->
+    <section class="monitoring-area hidden" id="monitoringArea">
+      <!-- Bar informasi driver yang sedang aktif. -->
+      <section class="driver-strip">
+        <!-- Informasi nama driver. -->
+        <div>
+          <!-- Label kecil driver. -->
+          <span class="muted">Driver</span>
+          <!-- Nama driver aktif. -->
+          <strong id="activeDriverName">-</strong>
+        </div>
+        <!-- Informasi jenis kelamin. -->
+        <div>
+          <!-- Label kecil gender. -->
+          <span class="muted">Jenis Kelamin</span>
+          <!-- Gender aktif. -->
+          <strong id="activeDriverGender">-</strong>
+        </div>
+        <!-- Informasi rule BPM aktif. -->
+        <div>
+          <!-- Label kecil rule. -->
+          <span class="muted">Rule BPM</span>
+          <!-- Threshold BPM aktif. -->
+          <strong id="activeRule">-</strong>
+        </div>
+        <!-- Tombol untuk mengganti data driver. -->
+        <button type="button" class="ghost-button" id="changeDriverButton">Ganti Driver</button>
+      </section>
 
-<h3>Microsleep</h3>
-<button onclick="downloadExcel(microData)">Download</button>
-<button class="delete" onclick="clearHistory('history_microsleep')">Hapus Semua</button>
-<table id="microTable"></table>
+      <!-- Grid kartu data realtime. -->
+      <section class="dashboard-grid">
+        <!-- Kartu BPM. -->
+        <article class="metric-card bpm-card" id="bpmCard">
+          <!-- Judul kartu BPM. -->
+          <div class="metric-title">💓 BPM</div>
+          <!-- Baris BPM dibuat sejajar dengan garis denyut nadi. -->
+          <div class="bpm-value-row">
+            <!-- Nilai BPM realtime. -->
+            <div id="bpm" class="metric-value">-</div>
+            <!-- Garis vertikal merah di samping angka BPM yang naik-turun mengikuti pulse_live.visual. -->
+            <span class="pulse-line" id="pulseLine" aria-label="Garis live denyut nadi"></span>
+          </div>
+          <!-- Keterangan sinyal pulse. -->
+          <div id="pulseInfo" class="metric-subtitle">Menunggu sinyal pulse</div>
+        </article>
 
-<h3>Semua</h3>
-<button onclick="downloadExcel(allData)">Download</button>
-<button class="delete" onclick="clearHistory('history_semua')">Hapus Semua</button>
-<table id="allTable"></table>
+        <!-- Kartu kemiringan kepala. -->
+        <article class="metric-card" id="tiltCard">
+          <!-- Judul kartu kemiringan. -->
+          <div class="metric-title">🧠 Kemiringan</div>
+          <!-- Nilai kemiringan realtime. -->
+          <div id="tilt" class="metric-value">-</div>
+          <!-- Satuan kemiringan. -->
+          <div class="metric-subtitle">Derajat</div>
+        </article>
 
-<div id="popup"></div>
+        <!-- Kartu kondisi mata. -->
+        <article class="metric-card" id="eyeCard">
+          <!-- Judul kartu mata. -->
+          <div class="metric-title">👁️ Mata</div>
+          <!-- Nilai kondisi mata realtime. -->
+          <div id="eye" class="metric-value">-</div>
+          <!-- Keterangan sensor mata. -->
+          <div class="metric-subtitle">IR eye sensor</div>
+        </article>
 
-<audio id="alarm">
-<source src="https://www.soundjay.com/button/beep-07.wav">
-</audio>
+        <!-- Kartu status sistem. -->
+        <article class="metric-card status-card" id="statusCard">
+          <!-- Judul status. -->
+          <div class="metric-title">🚨 Status</div>
+          <!-- Status realtime. -->
+          <div id="status" class="metric-value">Loading...</div>
+          <!-- Durasi microsleep realtime. -->
+          <div id="liveDuration" class="metric-subtitle">Durasi: 0 detik</div>
+        </article>
+      </section>
 
-<script>
-// FIREBASE
-var firebaseConfig = {
-  apiKey: "AIzaSyCxGUL6WfZzzn3W_phwlMn6kNChyo7lmDA",
-  databaseURL: "https://driver-monitoring-6e4df-default-rtdb.asia-southeast1.firebasedatabase.app/"
-};
-firebase.initializeApp(firebaseConfig);
-var db = firebase.database();
+      <!-- Tombol dan panel Mode Pengujian dikembalikan seperti web awal. -->
+      <section class="test-mode-section">
+        <!-- Tombol untuk membuka atau menutup panel Mode Pengujian. -->
+        <button type="button" class="test-toggle-button" id="btnTest">🧪 Mode Pengujian</button>
 
-// CLOCK
-setInterval(()=>{
-  document.getElementById("clock").innerText =
-    new Date().toLocaleString();
-},1000);
+        <!-- Panel Mode Pengujian akan tampil saat tombol diklik. -->
+        <div class="test-panel hidden" id="testMode">
+          <!-- Judul Mode Pengujian. -->
+          <div class="section-heading">
+            <!-- Teks utama Mode Pengujian. -->
+            <h2>Mode Pengujian</h2>
+            <!-- Keterangan fungsi Mode Pengujian. -->
+            <p>Gunakan fitur ini untuk merekam data realtime lalu mengunduhnya sebagai Excel.</p>
+          </div>
 
-// REALTIME
-let lastStatus="Normal";
-let currentData={};
+          <!-- Form sederhana untuk nama pengujian. -->
+          <div class="test-form">
+            <!-- Input nama seperti kode web pertama. -->
+            <label class="field">
+              <!-- Label input nama pengujian. -->
+              <span>Nama</span>
+              <!-- Input nama pengujian dengan id yang sama seperti kode awal. -->
+              <input id="nama" placeholder="Nama" />
+            </label>
 
-db.ref("monitoring").on("value", snap=>{
-  let d=snap.val();
+            <!-- Tombol start dan stop mode pengujian. -->
+            <div class="test-buttons">
+              <!-- Tombol Start untuk mulai merekam data tiap detik. -->
+              <button type="button" class="secondary-button" id="startTestButton">Start</button>
+              <!-- Tombol Stop untuk menghentikan rekaman dan download Excel. -->
+              <button type="button" class="danger-button" id="stopTestButton">Stop</button>
+            </div>
+          </div>
 
-  if(!d){
-    document.getElementById("status").innerText="No Data";
-    return;
-  }
+          <!-- Timer pengujian seperti kode web awal. -->
+          <div class="timer" id="timer">00:00</div>
+        </div>
+      </section>
 
-  currentData=d;
+      <!-- Bagian histori microsleep saja. -->
+      <section class="history-card">
+        <!-- Heading histori. -->
+        <div class="history-header">
+          <!-- Judul histori. -->
+          <div>
+            <!-- Label kecil histori. -->
+            <p class="eyebrow">History</p>
+            <!-- Judul tabel histori microsleep. -->
+            <h2>Histori Microsleep</h2>
+            <!-- Keterangan bahwa histori umum sudah dihapus dari tampilan. -->
+            <p>Data yang tampil hanya kejadian dengan status Microsleep.</p>
+          </div>
+          <!-- Tombol aksi histori. -->
+          <div class="history-actions">
+            <!-- Tombol download Excel khusus microsleep. -->
+            <button type="button" class="secondary-button" id="downloadMicrosleepButton">Download Excel</button>
+            <!-- Tombol hapus histori microsleep. -->
+            <button type="button" class="danger-button" id="clearMicrosleepButton">Hapus Histori</button>
+          </div>
+        </div>
 
-  document.getElementById("bpm").innerText=d.bpm || "-";
-  document.getElementById("tilt").innerText=d.kemiringan || "-";
-  document.getElementById("eye").innerText=d.mata || "-";
+        <!-- Wrapper agar tabel tidak berantakan di HP. -->
+        <div class="table-wrapper">
+          <!-- Tabel histori microsleep. -->
+          <table id="microTable">
+            <!-- Header tabel histori. -->
+            <thead>
+              <!-- Baris header tabel. -->
+              <tr>
+                <!-- Kolom waktu. -->
+                <th>Waktu</th>
+                <!-- Kolom nama driver. -->
+                <th>Nama</th>
+                <!-- Kolom jenis kelamin. -->
+                <th>JK</th>
+                <!-- Kolom BPM. -->
+                <th>BPM</th>
+                <!-- Kolom rule BPM. -->
+                <th>Rule</th>
+                <!-- Kolom kemiringan. -->
+                <th>Kemiringan</th>
+                <!-- Kolom mata. -->
+                <th>Mata</th>
+                <!-- Kolom durasi microsleep baru. -->
+                <th>Durasi Microsleep</th>
+                <!-- Kolom status. -->
+                <th>Status</th>
+                <!-- Kolom aksi hapus per baris. -->
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <!-- Isi tabel diisi lewat JavaScript. -->
+            <tbody id="microTableBody">
+              <!-- Baris kosong awal. -->
+              <tr>
+                <!-- Pesan awal ketika data belum tersedia. -->
+                <td colspan="10" class="empty-row">Belum ada histori microsleep.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
 
-  let statusEl=document.getElementById("status");
-  let card=document.getElementById("statusCard");
+  <!-- Popup kecil untuk alert. -->
+  <div id="popup" class="popup"></div>
 
-  statusEl.innerText=d.status || "-";
-
-  if(d.status=="Microsleep"){
-    statusEl.className="value danger";
-    card.style.background="linear-gradient(135deg,#7f1d1d,#ef4444)";
-    document.body.style.background="linear-gradient(135deg,#1f0000,#7f1d1d)";
-  } else {
-    statusEl.className="value normal";
-    card.style.background="rgba(255,255,255,0.05)";
-    document.body.style.background="linear-gradient(135deg,#020617,#0f172a)";
-  }
-
-  if(d.status=="Microsleep" && lastStatus!="Microsleep"){
-    showPopup("🚨 MICROSLEEP!");
-    document.getElementById("alarm").play();
-  }
-
-  lastStatus=d.status;
-});
-
-// POPUP
-function showPopup(msg){
-  let p=document.getElementById("popup");
-  p.innerText=msg;
-  p.style.display="block";
-  setTimeout(()=>p.style.display="none",3000);
-}
-
-// HISTORY
-let microData=[],allData=[];
-
-function render(data,id,path){
-  let html=`
-    <tr>
-      <th>Waktu</th>
-      <th>BPM</th>
-      <th>Kemiringan</th>
-      <th>Mata</th>
-      <th>Status</th>
-      <th></th>
-    </tr>
-  `;
-
-  data.reverse().forEach(d=>{
-    html+=`<tr>
-      <td>${d.datetime || '-'}</td>
-      <td>${d.bpm || '-'}</td>
-      <td>${d.kemiringan || '-'}</td>
-      <td>${d.mata || '-'}</td>
-      <td>${d.status || '-'}</td>
-      <td><button class="delete" onclick="deleteItem('${path}','${d.key}')">X</button></td>
-    </tr>`;
-  });
-
-  document.getElementById(id).innerHTML=html;
-}
-
-db.ref("history_microsleep").limitToLast(10).on("value", snap=>{
-  microData=[];
-  snap.forEach(c=>{
-    let d=c.val(); d.key=c.key;
-    microData.push(d);
-  });
-  render(microData,"microTable","history_microsleep");
-});
-
-db.ref("history_semua").limitToLast(10).on("value", snap=>{
-  allData=[];
-  snap.forEach(c=>{
-    let d=c.val(); d.key=c.key;
-    allData.push(d);
-  });
-  render(allData,"allTable","history_semua");
-});
-
-function deleteItem(path,key){
-  db.ref(path+"/"+key).remove();
-}
-
-function clearHistory(path){
-  if(confirm("Hapus semua?")){
-    db.ref(path).remove();
-  }
-}
-
-// EXCEL
-function downloadExcel(data){
-  let ws=XLSX.utils.json_to_sheet(data);
-  let wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Data");
-  XLSX.writeFile(wb,"history.xlsx");
-}
-
-// TEST
-let testData=[],timer,sec=0;
-let isTestOpen=false;
-
-function toggleTest(){
-  let test=document.getElementById("testMode");
-  let btn=document.getElementById("btnTest");
-
-  isTestOpen=!isTestOpen;
-
-  if(isTestOpen){
-    test.style.display="block";
-    btn.innerText="⬅️ Kembali";
-  } else {
-    test.style.display="none";
-    btn.innerText="🧪 Mode Pengujian";
-  }
-}
-
-function startTest(){
-  let nama=document.getElementById("nama").value;
-  if(!nama) return showPopup("Isi nama!");
-
-  testData=[]; sec=0;
-  showPopup("Start!");
-
-  timer=setInterval(()=>{
-    sec++;
-    timerDisplay();
-
-    testData.push({
-      nama:nama,
-      waktu:new Date().toLocaleString(),
-      bpm:currentData.bpm,
-      kemiringan:currentData.kemiringan,
-      mata:currentData.mata,
-      status:currentData.status
-    });
-
-  },1000);
-}
-
-function stopTest(){
-  clearInterval(timer);
-
-  let nama=document.getElementById("nama").value;
-  let tgl=new Date().toISOString().slice(0,10);
-
-  let ws=XLSX.utils.json_to_sheet(testData);
-  let wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Pengujian");
-
-  XLSX.writeFile(wb,`Pengujian_${nama}_${tgl}.xlsx`);
-
-  showPopup("Download berhasil!");
-}
-
-// TIMER
-function timerDisplay(){
-  let m=Math.floor(sec/60);
-  let s=sec%60;
-  document.getElementById("timer").innerText =
-    `${m}:${s<10?"0":""}${s}`;
-}
-</script>
-
+  <!-- Audio alarm ketika status berubah menjadi Microsleep. -->
+  <audio id="alarm" preload="auto">
+    <!-- Sumber suara beep dari CDN. -->
+    <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav" />
+  </audio>
 </body>
 </html>
