@@ -1,0 +1,644 @@
+/* Reset ukuran box agar padding tidak membuat layout melebar. */
+* {
+  box-sizing: border-box;
+}
+
+/* Variabel warna utama agar mudah diubah. */
+:root {
+  --bg-a: #020617;
+  --bg-b: #0f172a;
+  --card: rgba(255, 255, 255, 0.07);
+  --card-strong: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.12);
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --blue: #38bdf8;
+  --green: #22c55e;
+  --red: #ef4444;
+  --red-dark: #7f1d1d;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+/* Tampilan dasar body. */
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 34rem),
+    linear-gradient(135deg, var(--bg-a), var(--bg-b));
+}
+
+/* Body berubah warna saat microsleep aktif. */
+body.alert-mode {
+  background:
+    radial-gradient(circle at top left, rgba(239, 68, 68, 0.2), transparent 34rem),
+    linear-gradient(135deg, #160000, var(--red-dark));
+}
+
+/* Wrapper utama agar rapi di laptop dan tetap pas di HP. */
+.app-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Header atas memakai flex agar responsif. */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+/* Label kecil di atas judul. */
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Judul utama. */
+h1,
+h2 {
+  margin: 0;
+  line-height: 1.15;
+}
+
+/* Ukuran judul utama. */
+h1 {
+  font-size: clamp(24px, 4vw, 40px);
+}
+
+/* Ukuran subjudul. */
+h2 {
+  font-size: clamp(20px, 2.4vw, 28px);
+}
+
+/* Kartu jam di kanan header. */
+.clock-card {
+  min-width: 190px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--card);
+  text-align: center;
+  color: var(--muted);
+  box-shadow: var(--shadow);
+}
+
+/* Status koneksi alat kecil di bagian atas. */
+.device-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+/* Titik status alat. */
+.device-dot {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border-radius: 999px;
+  background: var(--red);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.85);
+}
+
+/* Titik hijau saat alat terhubung. */
+.device-status.connected .device-dot {
+  background: var(--green);
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.9);
+  animation: connectedBlink 1.2s ease-in-out infinite;
+}
+
+/* Titik merah saat alat tidak terhubung. */
+.device-status.disconnected .device-dot {
+  background: var(--red);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.85);
+}
+
+/* Teks status dibuat bertumpuk agar tetap rapi di HP. */
+.device-status-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Teks utama status koneksi. */
+.device-status-text strong {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+/* Detail kecil status koneksi. */
+.device-status-text small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+/* Animasi kecil saat alat terhubung. */
+@keyframes connectedBlink {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.78;
+  }
+
+  50% {
+    transform: scale(1.22);
+    opacity: 1;
+  }
+}
+
+/* Kartu form awal. */
+.setup-card,
+.history-card,
+.driver-strip,
+.metric-card {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+/* Ruang dalam form awal. */
+.setup-card {
+  padding: 24px;
+}
+
+/* Heading section. */
+.section-heading {
+  margin-bottom: 18px;
+}
+
+/* Paragraf kecil section. */
+.section-heading p,
+.history-header p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+/* Grid form agar rapi di laptop dan satu kolom di HP. */
+.setup-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+/* Grup label input. */
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+/* Teks label input. */
+.field span,
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Input dan select dibuat seragam. */
+input,
+select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0 14px;
+  outline: none;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Warna option select tetap terbaca. */
+select option {
+  color: #0f172a;
+}
+
+/* Catatan rule mengambil lebar penuh form. */
+.rule-note {
+  grid-column: 1 / -1;
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: #bfdbfe;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(147, 197, 253, 0.24);
+}
+
+/* Tombol utama. */
+.primary-button,
+.secondary-button,
+.danger-button,
+.ghost-button,
+.row-delete-button {
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+/* Efek hover tombol. */
+.primary-button:hover,
+.secondary-button:hover,
+.danger-button:hover,
+.ghost-button:hover,
+.row-delete-button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+/* Tombol utama mengambil satu baris penuh. */
+.primary-button {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+}
+
+/* Tombol sekunder. */
+.secondary-button {
+  background: linear-gradient(135deg, #2563eb, #0891b2);
+}
+
+/* Tombol berbahaya. */
+.danger-button,
+.row-delete-button {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+
+/* Tombol transparan. */
+.ghost-button {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Area monitoring. */
+.monitoring-area {
+  display: grid;
+  gap: 18px;
+}
+
+/* Class untuk menyembunyikan elemen. */
+.hidden {
+  display: none !important;
+}
+
+/* Strip driver aktif. */
+.driver-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+}
+
+/* Isi strip driver. */
+.driver-strip div {
+  display: grid;
+  gap: 4px;
+}
+
+/* Grid dashboard adaptif. */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Kartu metrik. */
+.metric-card {
+  min-height: 174px;
+  padding: 18px;
+  overflow: hidden;
+}
+
+/* Kartu status lebih lebar di laptop. */
+.status-card {
+  grid-column: span 1;
+}
+
+/* Judul metrik. */
+.metric-title {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+/* Nilai metrik. */
+.metric-value {
+  margin-top: 10px;
+  font-size: clamp(30px, 5vw, 46px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+/* Keterangan kecil metrik. */
+.metric-subtitle {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Nilai normal. */
+.normal-text {
+  color: var(--green);
+}
+
+/* Nilai bahaya. */
+.danger-text {
+  color: #fff;
+}
+
+/* Kartu sensor diberi transisi agar perubahan merah terasa halus. */
+.metric-card {
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+/* Kartu sensor berubah merah saat sensor tersebut mendeteksi kondisi microsleep. */
+.metric-card.sensor-alert {
+  border-color: rgba(248, 113, 113, 0.9);
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.94), rgba(239, 68, 68, 0.9));
+  box-shadow: 0 24px 80px rgba(239, 68, 68, 0.28);
+}
+
+/* Judul dan keterangan kartu sensor dibuat putih saat kartu merah. */
+.metric-card.sensor-alert .metric-title,
+.metric-card.sensor-alert .metric-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Nilai pada kartu sensor dibuat putih saat kartu merah. */
+.metric-card.sensor-alert .metric-value {
+  color: #fff;
+}
+
+/* Kartu status saat microsleep. */
+.status-card.alert {
+  background: linear-gradient(135deg, var(--red-dark), var(--red));
+}
+
+/* Baris angka BPM dan garis denyut dibuat sejajar. */
+.bpm-value-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  min-height: 64px;
+  margin-top: 10px;
+}
+
+/* Nilai BPM di dalam baris khusus tidak perlu margin atas lagi. */
+.bpm-value-row .metric-value {
+  margin-top: 0;
+}
+
+/* Garis merah vertikal di samping angka BPM tanpa kotak tambahan. */
+.pulse-line {
+  display: inline-block;
+  width: 5px;
+  height: 12px;
+  min-height: 8px;
+  max-height: 58px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: var(--red);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.95);
+  transform-origin: bottom center;
+  transition: height 0.14s ease-out, opacity 0.16s ease-out, box-shadow 0.16s ease-out;
+}
+
+/* Animasi tambahan saat beat_event terdeteksi. */
+.pulse-line.beat {
+  animation: beatPulse 0.24s ease-out;
+}
+
+/* Keyframe garis saat detak masuk agar terlihat berdenyut naik-turun. */
+@keyframes beatPulse {
+  0% {
+    transform: scaleY(1);
+    opacity: 0.82;
+  }
+  50% {
+    transform: scaleY(1.18);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0.94;
+  }
+}
+
+/* Pembungkus Mode Pengujian. */
+.test-mode-section {
+  display: grid;
+  gap: 12px;
+}
+
+/* Tombol Mode Pengujian dibuat penuh seperti kode awal tetapi lebih rapi. */
+.test-toggle-button {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  padding: 13px 16px;
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+  background: linear-gradient(135deg, #3b82f6, #06b6d4);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+/* Efek hover tombol Mode Pengujian. */
+.test-toggle-button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+/* Panel Mode Pengujian. */
+.test-panel {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+/* Form Mode Pengujian. */
+.test-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+/* Tombol Start dan Stop dibuat sejajar. */
+.test-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Timer Mode Pengujian. */
+.timer {
+  margin-top: 16px;
+  text-align: center;
+  font-size: clamp(32px, 7vw, 48px);
+  font-weight: 900;
+  color: var(--blue);
+  letter-spacing: -0.04em;
+}
+
+/* Kartu histori. */
+.history-card {
+  padding: 18px;
+}
+
+/* Header histori. */
+.history-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+/* Tombol histori. */
+.history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Wrapper tabel agar horizontal scroll di HP. */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Tabel histori. */
+table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+/* Header tabel. */
+th {
+  position: sticky;
+  top: 0;
+  padding: 12px 10px;
+  text-align: left;
+  color: #dbeafe;
+  background: rgba(15, 23, 42, 0.96);
+}
+
+/* Sel tabel. */
+td {
+  padding: 11px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+/* Baris kosong. */
+.empty-row {
+  text-align: center;
+  color: var(--muted);
+}
+
+/* Popup alert. */
+.popup {
+  position: fixed;
+  right: 18px;
+  top: 18px;
+  z-index: 20;
+  display: none;
+  max-width: min(360px, calc(100% - 36px));
+  padding: 14px 16px;
+  border-radius: 16px;
+  color: white;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ef4444, #991b1b);
+  box-shadow: var(--shadow);
+}
+
+/* Responsif untuk tablet. */
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .driver-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Responsif untuk HP. */
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 14px;
+  }
+
+  .app-header,
+  .history-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .clock-card {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .device-status {
+    width: 100%;
+    border-radius: 18px;
+  }
+
+  .setup-form,
+  .dashboard-grid,
+  .driver-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card {
+    min-height: 150px;
+  }
+
+  .history-actions {
+    justify-content: stretch;
+  }
+
+  .history-actions button,
+  .ghost-button,
+  .test-buttons button {
+    width: 100%;
+  }
+
+  .test-form {
+    grid-template-columns: 1fr;
+  }
+
+  .test-buttons {
+    width: 100%;
+  }
+}
